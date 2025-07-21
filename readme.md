@@ -137,3 +137,27 @@ nats consumer next DURABLE CONS --no-ack
 nats consumer next DURABLE CONS
 nats consumer next DURABLE CONS
 ```
+
+## NATS Key/Value
+
+```bash
+docker-compose exec cli bash
+
+nats kv add configs --history=5 --description "App configs" --replicas 3
+nats kv put configs db.host localhost
+nats kv get configs db.host
+nats kv put configs db.host db.prod.internal
+nats kv history configs db.host
+```
+
+```bash
+docker-compose exec cli bash
+nats kv put configs db.host db.failover.internal
+nats kv watch configs db.host
+```
+
+```bash
+docker-compose exec cli bash
+nats kv del configs db.host
+nats kv purge configs db.host
+```
