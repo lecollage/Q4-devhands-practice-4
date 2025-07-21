@@ -29,7 +29,9 @@ docker-compose exec cli bash
 nats bench pub test-subject
 ```
 
-## Publish/Subscribe
+## Basic scenarios
+
+### Publish/Subscribe
 ```bash 
 docker-compose exec cli bash
 nats sub 'topic.>'
@@ -48,3 +50,90 @@ nats pub topic.b test-b
 nats pub topic.c.d test-c-d
 ```
 
+### Work queue (consumer group)
+```bash
+docker-compose exec cli bash
+nats sub topic --queue grp1
+```
+```bash
+docker-compose exec cli bash
+nats pub topic --count 10 '{{ID}} : {{Count}} : {{Random 5 5}}'
+```
+
+### Request/Response
+```bash
+docker-compose exec cli bash
+nats reply topic 'RE: {{ Request }}'
+```
+```bash
+nats sub '>'
+```
+```bash
+docker-compose exec cli bash
+nats pub topic test-message
+nats request topic test-request
+
+nats pub topic test --reply=topic-re
+nats pub topic --count 10 '{{ID}} : {{Count}} : {{Random 5 5}}' --reply=topic-re
+```
+
+## Request/Response supercluster scenario
+```bash
+docker-compose exec cli bash
+nats context add eu --server eu-1:4222,eu-2:4222,eu-3:4222 --user user --password Pswd1
+nats context add as --server as-1:4222,as-2:4222,as-3:4222 --user user --password Pswd1
+```
+
+```bash
+docker-compose exec cli bash
+nats reply echo '[RU] Получено: {{ Request }}' --context ru
+```
+
+```bash
+docker-compose exec cli bash
+nats reply echo '[EU] Received: {{ Request }}' --context eu
+```
+
+```bash
+docker-compose exec cli bash
+nats reply echo '[AS] 수신됨: {{ Request }}' --context as
+```
+
+```bash
+docker-compose exec cli bash
+nats request echo "Msg {{Random 15 15}}" --context ru
+nats request echo "Msg {{Random 15 15}}" --context eu
+nats request echo "Msg {{Random 15 15}}" --context as
+```
+
+## Streams
+```bash
+docker-compose exec cli bash
+nats stream add DURABLE --subjects "durable.>"
+```
+All options should have default values
+
+```bash
+nats consumer add
+```
+All options should have default values
+
+```bash
+docker-compose exec cli bash
+nats pub durable.a "message 1"
+nats pub durable.a "message 2"
+```
+
+```bash
+docker-compose exec cli bash
+nats consumer info DURABLE CONS
+nats consumer update DURABLE CONS --wait 10s
+```
+
+```bash
+nats consumer next DURABLE CONS
+nats consumer next DURABLE CONS --no-ack
+nats consumer next DURABLE CONS --no-ack
+nats consumer next DURABLE CONS
+nats consumer next DURABLE CONS
+```
