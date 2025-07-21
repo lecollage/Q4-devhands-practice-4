@@ -161,3 +161,19 @@ docker-compose exec cli bash
 nats kv del configs db.host
 nats kv purge configs db.host
 ```
+
+## NATS Object Store
+```bash
+dd if=/dev/urandom of=backup.dump bs=10M count=1 && gzip backup.dump
+```
+
+```bash
+nats obj add backups --description "Daily DB backups" --storage file --replicas 3
+nats obj put backups ./backup.dump.gz --name backup-2025-04-22.tgz
+nats obj ls backups
+nats obj get backups backup-2025-04-22.tgz
+nats obj info backups backup-2025-04-22.tgz
+nats obj del backups backup-2025-04-22.tgz
+nats obj seal backups
+nats obj del backups
+```
